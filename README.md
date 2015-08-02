@@ -7,7 +7,7 @@ A reasonably simple Arduino-based sensor to publish garage door status to a home
 
 ## Third Party Software, Dependencies & Inspiration
 
-* .fzz files (circuit schematics) require Fritzing http://fritzing.org/home/
+* .fz* files (circuit schematics and parts) require Fritzing http://fritzing.org/home/
 * HC-SR04 Fritzing part from http://fritzing.org/projects/hc-sr04-project
 * OpenHAB from http://www.openhab.org/
 * Arduino compatible EtherTen from http://www.freetronics.com.au/
