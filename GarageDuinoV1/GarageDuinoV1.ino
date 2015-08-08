@@ -5,6 +5,7 @@
  * Error LED
  * OpenHAB IoT Gateway
  * MQTT PubSubClient from https://github.com/knolleary/pubsubclient
+ * Freetronics DHT22 Humidity/Temp sensor library https://github.com/freetronics/DHT-sensor-library
  * Requires packages mosquitto mosquitto-clients python-mosquitto on server
  */
 
@@ -16,13 +17,8 @@
 #define dhtPin 2 // Humidity/Temp Sensor
 #define dhtType DHT22 // DHT 22 (AM2302)
 #define erPin 7 // Error LED
-#define trPin 8 // HC-SR04 Trigger Pin
-#define ecPin 9 // HC-SR04 Echo Pin
-#define ping 1000 // no less than ~60ms to allow one ping to complete before the next is sent
-#define ok 20 // distance in cm under which the door is open
-#define tmg 58.2 // converts the ping duration to cm
 
-byte mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x50}; // my mac address
+byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x50}; // random mac address
 byte server[] = {192, 168, 2, 215}; // OMVBOX3 with OpenHAB
 IPAddress ip(192,168,2,150); //sensor01 Garageduino per HOSTS
 EthernetClient ethClient;
@@ -31,35 +27,39 @@ DHT dht(dhtPin, dhtType);
 
 unsigned long keepalivetime=0;
 unsigned long MQTT_reconnect=0;
-const String omsg = " open";
-const String cmsg = " closed";
-const String emsg = "error";
 const boolean dbg = true; // serial debugging
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  // handle message arrived
-}
-
 void setup() {
+ 
+  // init pins
+  pinMode(dhtPin, INPUT);
+  
   // general
   if (dbg) Serial.begin(9600);
+ 
+  debug(0,"Loaded, doing DHCP...");
   
-  // init pins
-  pinMode(trPin, OUTPUT);
-  pinMode(ecPin, INPUT);
-  pinMode(erPin, OUTPUT);
-  digitalWrite(erPin, HIGH);
-
-  // init Ethernet
-  Ethernet.begin(mac,ip);
-
+  // Ethernet
+  while (Ethernet.begin(mac) == 0) {
+    debug(0,"Failed to configure Ethernet using DHCP");
+    delay(3000);
+  }
+  // print your local IP address:
+  if(dbg) {
+    Serial.print("My DHCP IP: ");
+    for (byte thisByte = 0; thisByte < 4; thisByte++) {
+      // print the value of each byte of the IP address:
+      Serial.print(Ethernet.localIP()[thisByte], DEC);
+      Serial.print("."); 
+    }
+    Serial.println();
+  }
+  
   // init MQTT connection
-  /*
   while (client.connect("Garageduino") != 1) {
     Serial.println("Error connecting to MQTT");
     delay(3000);
   }
-  */
 
   // init Temp/Humidity Sensor
   dht.begin();
@@ -67,6 +67,11 @@ void setup() {
 
 void loop() {
   dhtSensor();
+  client.loop();
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  // handle message arrived
 }
 
 void debug(long num, String msg) {
