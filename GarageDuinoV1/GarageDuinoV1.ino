@@ -10,45 +10,47 @@ Original code improvements to the Ping sketch sourced from Trollmaker.com
 Some code and wiring inspired by http://en.wikiversity.org/wiki/User:Dstaub/robotcar
 */
 
-#define trigPin 13
-#define echoPin 12
-#define ledRed 11
-#define ledGrn 10
-
+#define erPin 13
+#define trPin 10
+#define ecPin 11
+#define ping 100
+#define ok 20
+#define tmg 58.2
+#define omsg " open"
+#define cmsg " closed"
+#define emsg "error"
 void setup() {
   Serial.begin (9600);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(ledRed, OUTPUT);
-  pinMode(ledGrn, OUTPUT);
+  pinMode(trPin, OUTPUT);
+  pinMode(ecPin, INPUT);
+  pinMode(erPin, OUTPUT);
+  digitalWrite(erPin, HIGH);
 }
-
 void loop() {
-  long duration, distance;
-  digitalWrite(trigPin, LOW);
+  long dur, dist;
+  digitalWrite(trPin, LOW);
   delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
+  digitalWrite(trPin, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  distance = (duration/2) / 29.1;
-  
-  if (distance < 10) {
-    // digitalWrite(ledRed,HIGH);
-    digitalWrite(ledGrn,LOW);
+  digitalWrite(trPin, LOW);
+  dur = pulseIn(ecPin, HIGH);
+  dist = dur / tmg;
+  if (dist >= 200 || dist <= 0) {
+    // Sensor isn't reading a valid value
+    digitalWrite(erPin,HIGH);
+    Serial.println(emsg);
+  } else if (dist < ok) {
+    // door is open
+    digitalWrite(erPin,HIGH);
+    delay(100);
+    digitalWrite(erPin,LOW);
+    Serial.print(dist);
+    Serial.println(omsg);
   } else {
-    // digitalWrite(ledRed,LOW);
-    digitalWrite(ledGrn,HIGH);
+    // door is closed
+    digitalWrite(erPin,LOW);
+    Serial.print(dist);
+    Serial.println(cmsg);
   }
-  
-  if (distance >= 200 || distance <= 0){
-    Serial.println("OUT OF RANGE");
-    Serial.println("duration:" + duration);
-    Serial.println("distance:" + distance);
-  } else {
-    Serial.print(distance);
-    Serial.println(" cm");
-  }
-  
-  delay(1000);
+  delay(ping);
 }
