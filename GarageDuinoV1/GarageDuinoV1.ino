@@ -12,41 +12,43 @@ Some code and wiring inspired by http://en.wikiversity.org/wiki/User:Dstaub/robo
 
 #define trigPin 13
 #define echoPin 12
-#define led 11
-#define led2 10
+#define ledRed 11
+#define ledGrn 10
 
 void setup() {
   Serial.begin (9600);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  pinMode(led, OUTPUT);
-  pinMode(led2, OUTPUT);
+  pinMode(ledRed, OUTPUT);
+  pinMode(ledGrn, OUTPUT);
 }
 
 void loop() {
   long duration, distance;
-  digitalWrite(trigPin, LOW);  // Added this line
-  delayMicroseconds(2); // Added this line
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
-//  delayMicroseconds(1000); - Removed this line
-  delayMicroseconds(10); // Added this line
+  delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   distance = (duration/2) / 29.1;
-  if (distance < 4) {  // This is where the LED On/Off happens
-    digitalWrite(led,HIGH); // When the Red condition is met, the Green LED should turn off
-  digitalWrite(led2,LOW);
-}
-  else {
-    digitalWrite(led,LOW);
-    digitalWrite(led2,HIGH);
+  
+  if (distance < 10) {
+    // digitalWrite(ledRed,HIGH);
+    digitalWrite(ledGrn,LOW);
+  } else {
+    // digitalWrite(ledRed,LOW);
+    digitalWrite(ledGrn,HIGH);
   }
+  
   if (distance >= 200 || distance <= 0){
-    Serial.println("Out of range");
-  }
-  else {
+    Serial.println("OUT OF RANGE");
+    Serial.println("duration:" + duration);
+    Serial.println("distance:" + distance);
+  } else {
     Serial.print(distance);
     Serial.println(" cm");
   }
-  delay(500);
+  
+  delay(1000);
 }
