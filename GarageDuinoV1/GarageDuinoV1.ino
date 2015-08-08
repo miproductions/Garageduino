@@ -1,6 +1,6 @@
 /*
  * Garage Door Sensor
- * HC-SR04 Ultrasonic Sensor DEPRECATED due to 40kHz being in dog hearing range. TODO switch to IR/reed?
+ * 
  * Freetronics EtherTen Uno-compatible (presumed on 10,11,12,13 as per Ethernet Shield)
  * Error LED
  * OpenHAB IoT Gateway
@@ -8,6 +8,13 @@
  * Requires packages mosquitto mosquitto-clients python-mosquitto on server
  */
 
+#include <SPI.h>
+#include <Ethernet.h>
+#include <PubSubClient.h> // MQTT framework
+#include <DHT.h> // Humidity/Temp Sensor
+
+#define dhtPin 2 // Humidity/Temp Sensor
+#define dhtType DHT22 // DHT 22 (AM2302)
 #define erPin 7 // Error LED
 #define trPin 8 // HC-SR04 Trigger Pin
 #define ecPin 9 // HC-SR04 Echo Pin
@@ -15,15 +22,12 @@
 #define ok 20 // distance in cm under which the door is open
 #define tmg 58.2 // converts the ping duration to cm
 
-#include <SPI.h>
-#include <Ethernet.h>
-#include <PubSubClient.h> // MQTT framework
-
 byte mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x50}; // my mac address
 byte server[] = {192, 168, 2, 215}; // OMVBOX3 with OpenHAB
 IPAddress ip(192,168,2,150); //sensor01 Garageduino per HOSTS
 EthernetClient ethClient;
 PubSubClient client(server, 1883, callback, ethClient); // inits the MQQT host
+DHT dht(dhtPin, dhtType);
 
 unsigned long keepalivetime=0;
 unsigned long MQTT_reconnect=0;
@@ -56,39 +60,34 @@ void setup() {
     delay(3000);
   }
   */
+
+  // init Temp/Humidity Sensor
+  dht.begin();
 }
 
 void loop() {
-  long dur, dist;
-  digitalWrite(trPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trPin, LOW);
-  dur = pulseIn(ecPin, HIGH);
-  dist = dur / tmg;
-  if (dist >= 200 || dist <= 0) {
-    // Sensor isn't reading a valid value
-    digitalWrite(erPin,HIGH);
-    debug(dist, emsg);
-  } else if (dist < ok) {
-    // door is open
-    digitalWrite(erPin,HIGH);
-    delay(100);
-    digitalWrite(erPin,LOW);
-    debug(dist, omsg);
-  } else {
-    // door is closed
-    digitalWrite(erPin,LOW);
-    debug(dist, cmsg);
-  }
-  delay(ping);
+  dhtSensor();
 }
 
-void debug(long dist, String msg) {
+void debug(long num, String msg) {
   if (dbg) {
-    Serial.print(dist);
+    Serial.print(num);
     Serial.println(msg);
+  }
+}
+
+void dhtSensor() {
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  // check if returns are valid, if they are NaN (not a number) then something went wrong!
+  if (isnan(t) || isnan(h)) {
+   debug(0,"Failed to read from DHT");
+  } else {
+    debug(h, "% Humidity");
+    debug (t, "*C Temperature");
   }
 }
 
