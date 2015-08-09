@@ -28,6 +28,10 @@ DHT dht(dhtPin, dhtType);
 unsigned long keepalivetime=0;
 unsigned long MQTT_reconnect=0;
 const boolean dbg = true; // serial debugging
+char* tempC;
+char* humidity;
+unsigned long time;
+char message_buffer[100];
 
 void setup() {
  
@@ -54,19 +58,32 @@ void setup() {
     }
     Serial.println();
   }
-  
-  // init MQTT connection
-  while (client.connect("Garageduino") != 1) {
-    Serial.println("Error connecting to MQTT");
-    delay(3000);
-  }
 
   // init Temp/Humidity Sensor
   dht.begin();
 }
 
 void loop() {
+
+  // read the temp and humidity
   dhtSensor();
+  
+  // ensure MQTT connection
+  if (!client.connected()) {
+    while (client.connect("Garageduino") != 1) {
+      debug(0,"Error connecting to MQTT");
+      delay(5000);
+    }
+  }
+
+  // publish to MQTT queue every 60 sec (TODO quicker for door status)
+  if (millis() > (time + 60000)) {
+    time = millis();
+    client.publish("radsyhab/garage/temperature",tempC);
+    client.publish("radsyhab/garage/humidity",humidity);
+  }
+  
+  delay(5000);
   client.loop();
 }
 
@@ -91,6 +108,8 @@ void dhtSensor() {
   if (isnan(t) || isnan(h)) {
    debug(0,"Failed to read from DHT");
   } else {
+    tempC = dtostrf(t,1,1,message_buffer);
+    humidity = dtostrf(h,1,1,message_buffer);
     debug(h, "% Humidity");
     debug (t, "*C Temperature");
   }
