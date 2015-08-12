@@ -31,7 +31,8 @@ const boolean dbg = true; // serial debugging
 char* tempC;
 char* humidity;
 unsigned long time;
-char message_buffer[100];
+char temp_buffer[10];
+char humid_buffer[10];
 
 void setup() {
  
@@ -79,7 +80,9 @@ void loop() {
   // publish to MQTT queue every 60 sec (TODO quicker for door status)
   if (millis() > (time + 60000)) {
     time = millis();
+    debug(0,String(tempC) + " degrees, publishing...");
     client.publish("radsyhab/garage/temperature",tempC);
+    debug(0, String(humidity) + " % humidity, publishing...");
     client.publish("radsyhab/garage/humidity",humidity);
   }
   
@@ -108,8 +111,8 @@ void dhtSensor() {
   if (isnan(t) || isnan(h)) {
    debug(0,"Failed to read from DHT");
   } else {
-    tempC = dtostrf(t,1,1,message_buffer);
-    humidity = dtostrf(h,1,1,message_buffer);
+    tempC = dtostrf(t,1,1,temp_buffer);
+    humidity = dtostrf(h,1,1,humid_buffer);
     debug(h, "% Humidity");
     debug (t, "*C Temperature");
   }
