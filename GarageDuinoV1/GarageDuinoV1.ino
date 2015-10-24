@@ -30,6 +30,8 @@ unsigned long MQTT_reconnect=0;
 const boolean dbg = true; // serial debugging
 char* tempC;
 char* humidity;
+char* doorState[] = {"DS0","DS1","DS2"};
+short extDoor;
 unsigned long time;
 char temp_buffer[10];
 char humid_buffer[10];
@@ -68,6 +70,9 @@ void loop() {
 
   // read the temp and humidity
   dhtSensor();
+
+  // read the door sensor
+  doorSensor();
   
   // ensure MQTT connection
   if (!client.connected()) {
@@ -84,6 +89,8 @@ void loop() {
     client.publish("radsyhab/garage/temperature",tempC);
     debug(0, String(humidity) + " % humidity, publishing...");
     client.publish("radsyhab/garage/humidity",humidity);
+    debug(0, "Door state " + String(doorState[extDoor]));
+    client.publish("radsyhab/garage/doors/ext",doorState[extDoor]);
   }
   
   delay(5000);
@@ -116,6 +123,11 @@ void dhtSensor() {
     debug(h, "% Humidity");
     debug (t, "*C Temperature");
   }
+}
+
+void doorSensor() {
+  // for debugging, send error code
+  extDoor = 0;
 }
 
 
