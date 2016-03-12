@@ -4,53 +4,93 @@
  */
 
 #include "DHT.h"; // https://github.com/freetronics/DHT-sensor-library
+
+// Pins - no duplicates
+#define lightSensorAPinI 0
+#define printerLightsDPinO 0
+#define garageDoorDPinI 2
+#define humitempDPinI 3
+#define garageWindowDPinI 4
+#define onboardLedDPinO 13
+
+// Constants
 #define DHTTYPE DHT22
+#define DEBUG true
+#define DELAY 1000
+#define YES true
+#define NO false
 
-int lightSensorAPinI = 0;
+// Variables
 int lightSensorVal = 0;
-int printerLightsDPinO = 0;
-int garageDoorDPinI = 2;
-int humitempDPinI = 3;
-int garageWindowDPinI = 4;
-int onboardLedDPinO = 13;
-
+float temp = 0.0f;
+float humi = 0.0f;
 DHT dht(humitempDPinI, DHTTYPE);
 
-// the setup function runs once when you press reset or power the board
 void setup() {
-  // initialize digital pin 13 as an output.
-  pinMode(onboardLedDPinO, OUTPUT); // LED
-  pinMode(printerLightsDPinO, OUTPUT); // Relay 1
-  pinMode(garageWindowDPinI, INPUT); // Window HES input
-  pinMode(garageDoorDPinI, INPUT); // Garage Door HES input
+  pinMode(onboardLedDPinO, OUTPUT); // Activity LED
+  pinMode(printerLightsDPinO, OUTPUT); // Relay 1 for printer lights
+  pinMode(garageWindowDPinI, INPUT); // Window Hall Effect Sensor input
+  pinMode(garageDoorDPinI, INPUT); // Garage Door Hall Effect Sensor input
+  
   Serial.begin(9600);
   dht.begin();
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  digitalWrite(onboardLedDPinO, HIGH);   // turn the LED on (HIGH is the voltage level)
-  digitalWrite(printerLightsDPinO, HIGH);    // Relay 1 NO
+  digitalWrite(onboardLedDPinO, HIGH); // LED on while we're processing loop
+  digitalWrite(printerLightsDPinO, HIGH);
+  
+  debugit("-----------------------", YES);
+  
   lightSensorVal = analogRead(lightSensorAPinI);
-  Serial.print("Light Value:");
-  Serial.println(lightSensorVal);
-  Serial.print("Garage Window:");
-  Serial.println(digitalRead(garageWindowDPinI));
-  Serial.print("Garage Door:");
-  Serial.println(digitalRead(garageDoorDPinI));
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-  if (isnan(t) || isnan(h)) {
-    Serial.println("Failed to read from DHT");
-  } else {
-    Serial.print("Humidity: ");
-    Serial.println(h);
-    Serial.print("Temperature: ");
-    Serial.print(t);
-    Serial.println(" *C");
-  }
-  delay(500);              // wait for a second
-  digitalWrite(onboardLedDPinO, LOW);    // turn the LED off by making the voltage LOW
-  // digitalWrite(printerLightsDPinO, LOW);    // Relay 1 NC
-  delay(500);              // wait for a second
+  debugit("Light Value:", NO);
+  debugit(lightSensorVal, YES);
+  
+  debugit("Garage Window:", NO);
+  debugit(digitalRead(garageWindowDPinI), YES);
+  
+  debugit("Garage Door:", NO);
+  debugit(digitalRead(garageDoorDPinI), YES);
+  
+  humi = dht.readHumidity();
+  debugit("Humidity: ", NO);
+  debugit(humi, YES);
+  
+  temp = dht.readTemperature();
+  debugit("Temperature: ", NO);
+  debugit(temp, YES);
+  
+  digitalWrite(onboardLedDPinO, LOW); // LED off while we delay
+  delay(DELAY);
 }
+
+void debugit (int foo, boolean enter) {
+  if (DEBUG && !isnan(foo)) {
+    if (enter) {
+      Serial.println(foo);
+    } else {
+      Serial.print(foo);
+    }
+  }
+}
+
+void debugit (String foo, boolean enter) {
+  if (DEBUG) {
+    if (enter) {
+      Serial.println(foo);
+    } else {
+      Serial.print(foo);
+    }
+  }
+}
+
+void debugit (float foo, boolean enter) {
+  if (DEBUG && !isnan(foo)) {
+    if (enter) {
+      Serial.println(foo);
+    } else {
+      Serial.print(foo);
+    }
+  }
+}
+
